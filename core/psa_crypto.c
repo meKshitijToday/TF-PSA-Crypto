@@ -7948,6 +7948,30 @@ psa_status_t psa_key_agreement_iop_abort(
 #endif
 }
 
+int my_entropy_source(void *data, unsigned char *output, size_t len, size_t *olen);
+
+// custom entropy source
+int my_entropy_source(void *data, unsigned char *output, size_t len, size_t *olen)
+{
+    // printf("In my_entropy_source\n");
+    (void)data;
+
+    static int seeded = 0;
+    if (!seeded) {
+        srand(0);  // Seed the PRNG with the current time
+        seeded = 1;
+    }
+
+
+    // Replace this with actual entropy from hardware
+    for (size_t i = 0; i < len; i++)
+        output[i] = (unsigned char) rand();  // Replace with real entropy!
+
+    *olen = len;
+    return 0; // Return 0 on success
+}
+
+
 /****************************************************************/
 /* Random generation */
 /****************************************************************/
@@ -7973,6 +7997,9 @@ static void mbedtls_psa_random_init(mbedtls_psa_random_context_t *rng)
     }
 
     rng->entropy_init(&rng->entropy);
+
+    mbedtls_entropy_add_source(&rng->entropy, my_entropy_source, NULL, MBEDTLS_ENTROPY_MAX_GATHER, MBEDTLS_ENTROPY_SOURCE_STRONG);
+    
     mbedtls_psa_drbg_init(&rng->drbg);
 #endif /* MBEDTLS_PSA_CRYPTO_EXTERNAL_RNG */
 }
