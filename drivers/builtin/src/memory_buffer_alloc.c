@@ -6,6 +6,7 @@
  */
 
 #include "common.h"
+#include <malloc.h>
 
 #if defined(MBEDTLS_MEMORY_BUFFER_ALLOC_C)
 #include "mbedtls/memory_buffer_alloc.h"
@@ -296,7 +297,27 @@ static void *buffer_alloc_calloc(size_t n, size_t size)
     p = ((unsigned char *) cur) + sizeof(memory_header) + len;
     new = (memory_header *) p;
 
-    new->size = cur->size - len - sizeof(memory_header);
+    // new->size = cur->size - len - sizeof(memory_header);
+    // if (malloc_usable_size(new) == 0) {
+    //     printf("Heap corruption detected!\n");
+    //     // return;
+    // }
+    // error 
+    // printf("curr->size: %d\n",(int)(cur->size));
+    // printf("len: %d\n",(int)(len));
+    // printf("sizeof(memory_header): %d\n",(int)(sizeof(memory_header)));
+    if (new == 0) {
+        printf("Error: new is NULL\n");
+        fflush(stdout);
+    }
+    // printf("old new->size: %d\n",(int)(new->size));
+    fflush(stdout);
+    // (len+sizeof(memory_header)) has been allocated and temp_size is remaining
+    volatile size_t temp_size = cur->size - len - sizeof(memory_header);
+    new->size = temp_size;
+    // printf("new new->size: %d\n",(int)(new->size));
+    fflush(stdout);
+
     new->alloc = 0;
     new->prev = cur;
     new->next = cur->next;
